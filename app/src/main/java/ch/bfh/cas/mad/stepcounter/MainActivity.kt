@@ -11,12 +11,8 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var textViewData: TextView
@@ -25,7 +21,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sensorManager: SensorManager
     private var stepCounter: Sensor? = null
     private lateinit var eventListener: SensorEventListener
-    private val mainViewModel by viewModels<MainViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,15 +37,17 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR)
+        stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
         if (stepCounter == null) {
-            mainViewModel.sensorNotAvailable()
+            textViewSensorState.text = getString(R.string.sensor_not_available)
+            textViewSensorState.setBackgroundColor(getColor(R.color.error))
         } else {
-            mainViewModel.sensorAvailable()
+            textViewSensorState.text = getString(R.string.sensor_available)
+            textViewSensorState.setBackgroundColor(getColor(R.color.ok))
         }
         eventListener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
-               mainViewModel.stepDetected()
+                textViewData.text = event.values[0].toString()
             }
 
             override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
@@ -60,25 +57,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        lifecycleScope.launch {
-            mainViewModel.numSteps.collectLatest {count ->
-                textViewData.text = count.toString()
-            }
-        }
-        lifecycleScope.launch {
-            mainViewModel.sensorState.collectLatest { state ->
-                when(state) {
-                    MainViewModel.SensorState.AVAILABLE -> {
-                        textViewSensorState.text = getString(R.string.sensor_available)
-                        textViewSensorState.setBackgroundColor(getColor(R.color.ok))
-                    }
-                    MainViewModel.SensorState.NOT_AVILABLE -> {
-                        textViewSensorState.text = getString(R.string.sensor_not_available)
-                        textViewSensorState.setBackgroundColor(getColor(R.color.error))
-                    }
-                }
-            }
-        }
         startStepCounter()
     }
 
@@ -94,7 +72,11 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
-            sensorManager.registerListener(eventListener, stepCounter, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(
+                eventListener,
+                stepCounter,
+                SensorManager.SENSOR_DELAY_NORMAL
+            )
         }
     }
 
