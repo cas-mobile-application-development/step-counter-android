@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">step-counter-android</string>
+    <string name="no_sensor">No sensor</string>
+    <string name="ok">OK</string>
+    <string name="activity_recognition_rationale_title">Wozu tracken wir deine Aktivität?</string>
+    <string name="activity_recognition_rationale_message">Damit wir deine Schritte zuahlen können.</string>
+    <string name="sensor_available">Sensor available</string>
+    <string name="sensor_not_available">Sensor not available</string>
 </resources>
